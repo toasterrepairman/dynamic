@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.direnv/
+*.tar.gz
+api-1.json
