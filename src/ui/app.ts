@@ -146,13 +146,16 @@ function renderLaneConfig(state: AppState): void {
       <div class="selected-hero-banner" style="--hero-color: rgb(${r},${g},${b})">
         <img src="${hero.images.icon_hero_card_webp}" alt="${hero.name}" />
         <h2>${hero.name}</h2>
-        <div class="matchup-strip">
+        <div class="matchup-strip-wrapper">
+          <span class="matchup-strip-label">Win rate vs opponents</span>
+          <div class="matchup-strip">
           ${heroMatchups.map((m) => `
             <div class="matchup-chip" data-hero-id="${m.enemy!.id}">
               <img src="${m.enemy!.images.icon_image_small_webp}" alt="${m.enemy!.name}" loading="lazy" />
-              <span class="matchup-wr ${m.wr >= 0.55 ? 'wr-good' : m.wr <= 0.45 ? 'wr-bad' : 'wr-neutral'}">${(m.wr * 100).toFixed(1)}%</span>
+              <span class="matchup-wr" style="color:${wrColor(m.wr * 100)}">${(m.wr * 100).toFixed(1)}%</span>
             </div>
           `).join("")}
+          </div>
         </div>
         <button class="back-btn" id="back-heroes">Change Hero</button>
       </div>

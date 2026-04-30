@@ -344,6 +344,22 @@ input[type="search"]:focus {
   white-space: nowrap;
 }
 
+.matchup-strip-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.matchup-strip-label {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .matchup-strip {
   flex: 1;
   display: flex;
