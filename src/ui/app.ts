@@ -161,8 +161,6 @@ function renderLaneConfig(state: AppState): void {
       </div>
 
       <h2>Configure Your Lane</h2>
-      <p class="lane-desc">Deadlock has 3 lanes with 2v2 matchups. Select your lane partner and the two enemies you're laning against.</p>
-
       <div class="lane-pickers">
         <div class="picker-group ally-group">
           <h3>Your Lane Partner</h3>
@@ -336,7 +334,7 @@ function renderResults(state: AppState): void {
       ${headerHTML()}
       <div class="loading">
         <div class="spinner"></div>
-        <p>Analyzing matchup data...</p>
+        <p>Fetching matchup data...</p>
       </div>
       ${footerHTML()}
     `;
