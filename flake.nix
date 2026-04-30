@@ -20,6 +20,8 @@
           shellHook = ''
             echo "Node $(node --version)"
             echo "npm $(npm --version)"
+            echo ""
+            echo "Run 'npm run deploy' to build and stage the SPA for GitHub Pages."
           '';
         };
       });

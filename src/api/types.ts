@@ -143,6 +143,18 @@ export interface ItemPermutationStat {
   matches: number;
 }
 
+export interface PerformanceCurvePoint {
+  game_time: number;
+  net_worth_avg: number;
+  net_worth_std: number;
+  kills_avg: number;
+  kills_std: number;
+  deaths_avg: number;
+  deaths_std: number;
+  assists_avg: number;
+  assists_std: number;
+}
+
 export interface TieredItem {
   item: ItemAsset;
   stat: ItemStat;
@@ -164,6 +176,7 @@ export interface AppState {
   synergy: HeroSynergyStat | null;
   abilityOrders: AbilityOrderStat[];
   itemCombos: ItemPermutationStat[];
+  performanceCurve: PerformanceCurvePoint[];
   loading: boolean;
   error: string | null;
 }

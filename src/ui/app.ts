@@ -34,6 +34,18 @@ function wireThemePicker(): void {
   });
 }
 
+function footerHTML(): string {
+  return `
+    <footer class="app-footer">
+      <span>Data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">Deadlock API</a></span>
+      <span class="footer-links">
+        <a href="https://www.toast.cyou/" target="_blank" rel="noopener">toast.cyou</a>
+        <a href="https://github.com/toasterrepairman" target="_blank" rel="noopener">GitHub</a>
+      </span>
+    </footer>
+  `;
+}
+
 export function render(state: AppState): void {
   switch (state.view) {
     case "hero-select":
@@ -73,6 +85,7 @@ function renderHeroSelect(state: AppState): void {
         ${heroes.map((h) => heroCard(h)).join("")}
       </div>
     </section>
+    ${footerHTML()}
   `;
   wireHeroSelect(heroes);
 }
@@ -184,6 +197,7 @@ function renderLaneConfig(state: AppState): void {
         Analyze Matchup
       </button>
     </section>
+    ${footerHTML()}
   `;
   wireLaneConfig(state, otherHeroes);
 }
@@ -321,6 +335,7 @@ function renderResults(state: AppState): void {
         <div class="spinner"></div>
         <p>Analyzing matchup data...</p>
       </div>
+      ${footerHTML()}
     `;
     return;
   }
@@ -332,6 +347,7 @@ function renderResults(state: AppState): void {
         <p>${state.error}</p>
         <button id="retry-btn" class="analyze-btn">Retry</button>
       </div>
+      ${footerHTML()}
     `;
     document.getElementById("retry-btn")!.addEventListener("click", () => {
       window.dispatchEvent(new CustomEvent("analyze"));
@@ -388,10 +404,12 @@ function renderResults(state: AppState): void {
 
         <div class="results-sidebar">
           ${renderSynergy(state)}
+          ${renderPerformanceCurve(state)}
           ${renderItemCombos(state)}
         </div>
       </div>
     </section>
+    ${footerHTML()}
   `;
 
   document.getElementById("back-config")!.addEventListener("click", () => {
@@ -399,8 +417,16 @@ function renderResults(state: AppState): void {
   });
 }
 
+function wrColor(pct: number): string {
+  const t = Math.max(0, Math.min(1, (pct - 40) / (60 - 40)));
+  const r = Math.round(255 * (1 - t));
+  const g = Math.round(255 * t);
+  return `rgb(${r},${g},0)`;
+}
+
 function tierItemCard(ti: import("../api/types.js").TieredItem): string {
   const wr = (ti.winRate * 100).toFixed(1);
+  const wrPct = ti.winRate * 100;
   const buyMin = Math.round(ti.stat.avg_buy_time_s / 60);
   const slotLabel = ti.item.item_slot_type ?? "";
   const cost = ti.item.cost ?? 0;
@@ -412,7 +438,7 @@ function tierItemCard(ti: import("../api/types.js").TieredItem): string {
       <div class="tier-item-info">
         <span class="tier-item-name">${ti.item.name}</span>
         <span class="tier-item-meta">
-          <span class="wr">${wr}%</span>
+          <span class="wr" style="color:${wrColor(wrPct)}">${wr}%</span>
           <span class="meta-tag">${slotLabel}</span>
           ${costLabel ? `<span class="meta-tag">${costLabel}</span>` : ""}
         </span>
@@ -428,14 +454,59 @@ function tierItemCard(ti: import("../api/types.js").TieredItem): string {
 function renderSynergy(state: AppState): string {
   if (!state.synergy) return "";
   const s = state.synergy;
-  const wr = ((s.wins / s.matches_played) * 100).toFixed(1);
+  const wrPct = (s.wins / s.matches_played) * 100;
+  const wr = wrPct.toFixed(1);
+  const mp = s.matches_played || 1;
+  const heroName = state.myHero?.name ?? "You";
+  const allyName = state.teammate?.name ?? "Ally";
+
+  function avg(val: number): string {
+    return (val / mp).toFixed(1);
+  }
+  function nw(val: number): string {
+    const v = val / mp;
+    return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v));
+  }
+
   return `
     <section class="synergy-section">
       <h2>Lane Synergy</h2>
-      <p class="synergy-with">with ${state.teammate?.name ?? "?"}</p>
+      <p class="synergy-with">with ${allyName}</p>
       <div class="synergy-stats">
-        <div><span class="wr">${wr}%</span> WR</div>
+        <div><span class="wr" style="color:${wrColor(wrPct)}">${wr}%</span> WR</div>
         <div><span>${s.matches_played.toLocaleString()}</span> games</div>
+      </div>
+      <div class="synergy-detail">
+        <div class="synergy-detail-header">
+          <span></span>
+          <span>${heroName}</span>
+          <span>${allyName}</span>
+        </div>
+        <div class="synergy-detail-row">
+          <span class="synergy-detail-label">K/D/A</span>
+          <span>${avg(s.kills1)}/${avg(s.deaths1)}/${avg(s.assists1)}</span>
+          <span>${avg(s.kills2)}/${avg(s.deaths2)}/${avg(s.assists2)}</span>
+        </div>
+        <div class="synergy-detail-row">
+          <span class="synergy-detail-label">Net Worth</span>
+          <span>${nw(s.networth1)}</span>
+          <span>${nw(s.networth2)}</span>
+        </div>
+        <div class="synergy-detail-row">
+          <span class="synergy-detail-label">Last Hits</span>
+          <span>${avg(s.last_hits1)}</span>
+          <span>${avg(s.last_hits2)}</span>
+        </div>
+        <div class="synergy-detail-row">
+          <span class="synergy-detail-label">Denies</span>
+          <span>${avg(s.denies1)}</span>
+          <span>${avg(s.denies2)}</span>
+        </div>
+        <div class="synergy-detail-row">
+          <span class="synergy-detail-label">Obj Damage</span>
+          <span>${avg(s.obj_damage1)}</span>
+          <span>${avg(s.obj_damage2)}</span>
+        </div>
       </div>
     </section>
   `;
@@ -466,6 +537,85 @@ function renderItemCombos(state: AppState): string {
     <section class="combo-section">
       <h2>Item Combos</h2>
       <div class="combo-list">${rows}</div>
+    </section>
+  `;
+}
+
+function renderPerformanceCurve(state: AppState): string {
+  const curve = state.performanceCurve;
+  if (!curve || curve.length < 2) return "";
+
+  const svgW = 280;
+  const svgH = 140;
+  const padL = 36;
+  const padR = 28;
+  const padT = 12;
+  const padB = 24;
+  const plotW = svgW - padL - padR;
+  const plotH = svgH - padT - padB;
+
+  const maxTime = curve[curve.length - 1].game_time;
+  const maxNw = Math.max(...curve.map((p) => p.net_worth_avg));
+  const maxKills = Math.max(...curve.map((p) => p.kills_avg));
+
+  function xPos(t: number): number {
+    return padL + (t / maxTime) * plotW;
+  }
+  function yNw(v: number): number {
+    return padT + plotH - (v / maxNw) * plotH;
+  }
+  function yKills(v: number): number {
+    return padT + plotH - (v / (maxKills > 0 ? maxKills : 1)) * plotH;
+  }
+  function fmtMin(s: number): string {
+    return `${Math.round(s / 60)}m`;
+  }
+  function fmtNw(v: number): string {
+    return v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
+  }
+
+  const nwLine = curve.map((p) => `${xPos(p.game_time)},${yNw(p.net_worth_avg)}`).join(" ");
+  const killsLine = curve.map((p) => `${xPos(p.game_time)},${yKills(p.kills_avg)}`).join(" ");
+
+  const xTicks = curve.filter((_, i) => i % Math.ceil(curve.length / 5) === 0 || i === curve.length - 1);
+  const yTicks = 4;
+
+  const nwYTicks = Array.from({ length: yTicks + 1 }, (_, i) => {
+    const v = (maxNw / yTicks) * i;
+    const y = yNw(v);
+    return `<line x1="${padL}" y1="${y}" x2="${svgW - padR}" y2="${y}" stroke="var(--border)" stroke-width="0.5" />` +
+      `<text x="${padL - 4}" y="${y + 3}" text-anchor="end" fill="var(--text-dim)" font-size="8">${fmtNw(v)}</text>`;
+  }).join("");
+
+  const killsYTicks = Array.from({ length: yTicks + 1 }, (_, i) => {
+    const v = (maxKills / yTicks) * i;
+    const y = yKills(v);
+    return `<text x="${svgW - padR + 4}" y="${y + 3}" text-anchor="start" fill="var(--color-weapon)" font-size="8" opacity="0.8">${v.toFixed(1)}</text>`;
+  }).join("");
+
+  const xTickMarks = xTicks.map((p) =>
+    `<text x="${xPos(p.game_time)}" y="${svgH - 4}" text-anchor="middle" fill="var(--text-dim)" font-size="8">${fmtMin(p.game_time)}</text>`
+  ).join("");
+
+  const peakIdx = curve.reduce((best, p, i) => p.net_worth_avg > curve[best].net_worth_avg ? i : best, 0);
+  const peak = curve[peakIdx];
+
+  return `
+    <section class="curve-section">
+      <h2>Power Curve</h2>
+      <p class="curve-peak-label">Peak net worth at <strong>${fmtMin(peak.game_time)}</strong></p>
+      <svg class="curve-svg" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
+        ${nwYTicks}
+        ${killsYTicks}
+        ${xTickMarks}
+        <polyline points="${nwLine}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" />
+        <polyline points="${killsLine}" fill="none" stroke="var(--color-weapon)" stroke-width="1" stroke-dasharray="3,2" stroke-linejoin="round" opacity="0.7" />
+        <circle cx="${xPos(peak.game_time)}" cy="${yNw(peak.net_worth_avg)}" r="3" fill="var(--accent)" />
+      </svg>
+      <div class="curve-legend">
+        <span class="curve-legend-item"><span class="curve-legend-dot" style="background:var(--accent)"></span> Net Worth</span>
+        <span class="curve-legend-item"><span class="curve-legend-dot" style="background:var(--color-weapon)"></span> Kills</span>
+      </div>
     </section>
   `;
 }

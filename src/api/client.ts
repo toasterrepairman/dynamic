@@ -32,8 +32,12 @@ export function fetchItems(): Promise<import("./types.js").ItemAsset[]> {
 
 export function fetchItemStats(
   enemyHeroIds: number[],
+  heroId?: number,
 ): Promise<import("./types.js").ItemStat[]> {
   const params = new URLSearchParams();
+  if (heroId !== undefined) {
+    params.append("hero_ids", String(heroId));
+  }
   for (const id of enemyHeroIds) {
     params.append("enemy_hero_ids", String(id));
   }
@@ -96,5 +100,17 @@ export function fetchItemPermutationStats(
   });
   return fetchCached<import("./types.js").ItemPermutationStat[]>(
     `${BASE_URL}/v1/analytics/item-permutation-stats?${params}`,
+  );
+}
+
+export function fetchPerformanceCurve(
+  heroId: number,
+): Promise<import("./types.js").PerformanceCurvePoint[]> {
+  const params = new URLSearchParams({
+    hero_ids: String(heroId),
+    resolution: "0",
+  });
+  return fetchCached<import("./types.js").PerformanceCurvePoint[]>(
+    `${BASE_URL}/v1/analytics/player-performance-curve?${params}`,
   );
 }

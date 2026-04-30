@@ -8,6 +8,7 @@ import {
   fetchHeroSynergyStats,
   fetchAbilityOrderStats,
   fetchItemPermutationStats,
+  fetchPerformanceCurve,
 } from "./api/client.js";
 import { render } from "./ui/app.js";
 import "./styles/main.css";
@@ -27,6 +28,7 @@ const state: AppState = {
   synergy: null,
   abilityOrders: [],
   itemCombos: [],
+  performanceCurve: [],
   loading: false,
   error: null,
 };
@@ -75,6 +77,7 @@ window.addEventListener("reset", () => {
   state.synergy = null;
   state.abilityOrders = [];
   state.itemCombos = [];
+  state.performanceCurve = [];
   state.loading = false;
   state.error = null;
   render(state);
@@ -91,17 +94,19 @@ window.addEventListener("analyze", async () => {
   state.synergy = null;
   state.abilityOrders = [];
   state.itemCombos = [];
+  state.performanceCurve = [];
   render(state);
 
   try {
-    const [itemStats, matchup0, matchup1, synergyData, abilityData, comboData] =
+    const [itemStats, matchup0, matchup1, synergyData, abilityData, comboData, curveData] =
       await Promise.all([
-        fetchItemStats([state.enemies[0]!.id, state.enemies[1]!.id]),
+        fetchItemStats([state.enemies[0]!.id, state.enemies[1]!.id], state.myHero.id),
         fetchHeroCounterStats(state.myHero.id, state.enemies[0]!.id),
         fetchHeroCounterStats(state.myHero.id, state.enemies[1]!.id),
         fetchHeroSynergyStats(state.myHero.id, state.teammate.id),
         fetchAbilityOrderStats(state.myHero.id),
         fetchItemPermutationStats(state.myHero.id, 2),
+        fetchPerformanceCurve(state.myHero.id),
       ]);
 
     const shopableIds = new Set(state.items.map((i) => i.id));
@@ -117,7 +122,11 @@ window.addEventListener("analyze", async () => {
         (s.hero_id1 === state.teammate!.id && s.hero_id2 === state.myHero!.id),
     ) ?? null;
     state.abilityOrders = abilityOrdersRanked(abilityData);
-    state.itemCombos = comboData.sort((a, b) => b.matches - a.matches).slice(0, 5);
+    state.itemCombos = comboData
+      .filter((c) => c.matches >= 100)
+      .sort((a, b) => ((b.wins + 25) / (b.matches + 50)) - ((a.wins + 25) / (a.matches + 50)))
+      .slice(0, 5);
+    state.performanceCurve = curveData;
   } catch (err) {
     state.error = `Failed to fetch analytics: ${err instanceof Error ? err.message : String(err)}`;
   } finally {
