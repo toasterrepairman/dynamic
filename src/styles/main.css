@@ -25,6 +25,7 @@
   --color-weapon: #b58900;
   --color-vitality: #859900;
   --color-spirit: #6c71c4;
+  --icon-invert: 0;
 }
 
 [data-theme="solarized-light"] {
@@ -40,6 +41,7 @@
   --color-weapon: #b58900;
   --color-vitality: #859900;
   --color-spirit: #6c71c4;
+  --icon-invert: 1;
 }
 
 [data-theme="dracula"] {
@@ -55,6 +57,7 @@
   --color-weapon: #ffb86c;
   --color-vitality: #50fa7b;
   --color-spirit: #bd93f9;
+  --icon-invert: 0;
 }
 
 [data-theme="nord"] {
@@ -70,6 +73,7 @@
   --color-weapon: #ebcb8b;
   --color-vitality: #a3be8c;
   --color-spirit: #b48ead;
+  --icon-invert: 0;
 }
 
 html {
@@ -643,6 +647,7 @@ input[type="search"]:focus {
   height: 28px;
   border-radius: 4px;
   object-fit: cover;
+  filter: invert(var(--icon-invert));
 }
 
 .tier-item-info {
