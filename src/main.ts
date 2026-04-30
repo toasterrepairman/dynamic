@@ -4,6 +4,7 @@ import {
   fetchItems,
   fetchItemStats,
   fetchHeroCounterStats,
+  fetchAllHeroCounterStats,
   fetchHeroSynergyStats,
   fetchAbilityOrderStats,
   fetchItemPermutationStats,
@@ -20,6 +21,7 @@ const state: AppState = {
   enemies: [null, null],
   heroes: [],
   items: [],
+  allMatchups: [],
   counterItems: [],
   matchups: [],
   synergy: null,
@@ -33,11 +35,12 @@ async function init(): Promise<void> {
   render({ ...state, loading: true });
 
   try {
-    const [heroes, items] = await Promise.all([fetchHeroes(), fetchItems()]);
+    const [heroes, items, allMatchups] = await Promise.all([fetchHeroes(), fetchItems(), fetchAllHeroCounterStats()]);
     state.heroes = heroes.filter(
       (h) => h.player_selectable && !h.disabled && !h.in_development,
     );
     state.items = items.filter((i) => i.type === "upgrade" && i.shopable);
+    state.allMatchups = allMatchups;
     render(state);
   } catch (err) {
     state.error = `Failed to load hero/item data: ${err instanceof Error ? err.message : String(err)}`;

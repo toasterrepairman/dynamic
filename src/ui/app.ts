@@ -117,14 +117,29 @@ function renderLaneConfig(state: AppState): void {
   const [r, g, b] = hero.colors.ui;
   const otherHeroes = state.heroes.filter((h) => h.id !== hero.id).sort((a, b) => a.name.localeCompare(b.name));
 
+  const heroMatchups = state.allMatchups
+    .filter((m) => m.hero_id === hero.id)
+    .map((m) => ({
+      enemy: state.heroes.find((h) => h.id === m.enemy_hero_id),
+      wr: m.wins / m.matches_played,
+      games: m.matches_played,
+    }))
+    .filter((m) => m.enemy)
+    .sort((a, b) => b.wr - a.wr);
+
   el.innerHTML = `
     ${headerHTML()}
     <section class="lane-config">
       <div class="selected-hero-banner" style="--hero-color: rgb(${r},${g},${b})">
         <img src="${hero.images.icon_hero_card_webp}" alt="${hero.name}" />
-        <div>
-          <h2>${hero.name}</h2>
-          <p>${hero.description.role}</p>
+        <h2>${hero.name}</h2>
+        <div class="matchup-strip">
+          ${heroMatchups.map((m) => `
+            <div class="matchup-chip" data-hero-id="${m.enemy!.id}">
+              <img src="${m.enemy!.images.icon_image_small_webp}" alt="${m.enemy!.name}" loading="lazy" />
+              <span class="matchup-wr ${m.wr >= 0.55 ? 'wr-good' : m.wr <= 0.45 ? 'wr-bad' : 'wr-neutral'}">${(m.wr * 100).toFixed(1)}%</span>
+            </div>
+          `).join("")}
         </div>
         <button class="back-btn" id="back-heroes">Change Hero</button>
       </div>

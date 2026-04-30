@@ -42,6 +42,12 @@ export function fetchItemStats(
   );
 }
 
+export function fetchAllHeroCounterStats(): Promise<import("./types.js").HeroCounterStat[]> {
+  return fetchCached<import("./types.js").HeroCounterStat[]>(
+    `${BASE_URL}/v1/analytics/hero-counter-stats?same_lane_filter=true`,
+  );
+}
+
 export function fetchHeroCounterStats(
   heroId: number,
   enemyHeroId: number,

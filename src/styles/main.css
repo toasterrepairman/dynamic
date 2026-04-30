@@ -335,9 +335,56 @@ input[type="search"]:focus {
   border-radius: 6px;
 }
 
-.selected-hero-banner p {
-  color: var(--text-dim);
-  font-size: 0.85rem;
+.selected-hero-banner h2 {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.matchup-strip {
+  flex: 1;
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+  min-width: 0;
+}
+
+.matchup-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.matchup-strip::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 2px;
+}
+
+.matchup-strip::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.matchup-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  border-radius: 6px;
+  cursor: default;
+}
+
+.matchup-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.matchup-wr {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .back-btn {

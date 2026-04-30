@@ -158,6 +158,7 @@ export interface AppState {
   enemies: [HeroAsset | null, HeroAsset | null];
   heroes: HeroAsset[];
   items: ItemAsset[];
+  allMatchups: HeroCounterStat[];
   counterItems: TieredItem[];
   matchups: HeroCounterStat[];
   synergy: HeroSynergyStat | null;
