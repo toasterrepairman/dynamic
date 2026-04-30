@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "./",
+  base: "/dynamic/",
   build: {
     outDir: "dist",
     sourcemap: false,

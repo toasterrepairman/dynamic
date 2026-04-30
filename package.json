@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && cp index.html index.html.bak && rm -rf assets/ && cp -r dist/* . && git add index.html assets/ favicon.svg && cp index.html.bak index.html && rm index.html.bak && echo 'Built files staged. Review with git diff --cached, then commit and push.'"
+    "deploy": "npm run build && rm -rf assets/ && cp -r dist/* . && git add index.html assets/ favicon.svg && echo 'Built files staged. Review with git diff --cached, then commit and push. After pushing, run: git checkout -- index.html'"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
