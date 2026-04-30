@@ -11,6 +11,8 @@ import {
 import { render } from "./ui/app.js";
 import "./styles/main.css";
 
+document.documentElement.dataset.theme = localStorage.getItem("theme") ?? "solarized-dark";
+
 const state: AppState = {
   view: "hero-select",
   myHero: null,

@@ -2,6 +2,38 @@ import type { AppState, HeroAsset } from "../api/types.js";
 
 const el = document.getElementById("app")!;
 
+function currentTheme(): string {
+  return document.documentElement.dataset.theme ?? "solarized-dark";
+}
+
+function headerHTML(subtitle?: string): string {
+  const t = currentTheme();
+  return `
+    <header class="app-header">
+      <a class="app-title" id="reset-btn">Dynamic</a>
+      ${subtitle ? `<p class="subtitle">${subtitle}</p>` : ""}
+      <div class="theme-picker">
+        <select id="theme-select">
+          <option value="solarized-dark"${t === "solarized-dark" ? " selected" : ""}>Solarized Dark</option>
+          <option value="solarized-light"${t === "solarized-light" ? " selected" : ""}>Solarized Light</option>
+          <option value="dracula"${t === "dracula" ? " selected" : ""}>Dracula</option>
+          <option value="nord"${t === "nord" ? " selected" : ""}>Nord</option>
+        </select>
+      </div>
+    </header>
+  `;
+}
+
+function wireThemePicker(): void {
+  const select = document.getElementById("theme-select") as HTMLSelectElement | null;
+  if (!select) return;
+  select.addEventListener("change", () => {
+    const theme = select.value;
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+  });
+}
+
 export function render(state: AppState): void {
   switch (state.view) {
     case "hero-select":
@@ -15,6 +47,7 @@ export function render(state: AppState): void {
       break;
   }
   wireResetBtn();
+  wireThemePicker();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -30,21 +63,11 @@ function wireResetBtn(): void {
 function renderHeroSelect(state: AppState): void {
   const heroes = [...state.heroes].sort((a, b) => a.name.localeCompare(b.name));
   el.innerHTML = `
-    <header class="app-header">
-      <a class="app-title" id="reset-btn">Dynamic</a>
-      <p class="subtitle">Deadlock Counter-Build Guide</p>
-    </header>
+    ${headerHTML("Deadlock Counter-Build Guide")}
     <section class="hero-select">
       <h2>Pick Your Hero</h2>
       <div class="hero-filters">
         <input type="search" id="hero-search" placeholder="Search heroes..." class="search-input" />
-        <div class="type-filters">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="marksman">Marksman</button>
-          <button class="filter-btn" data-filter="assassin">Assassin</button>
-          <button class="filter-btn" data-filter="mystic">Mystic</button>
-          <button class="filter-btn" data-filter="brawler">Brawler</button>
-        </div>
       </div>
       <div class="hero-grid" id="hero-grid">
         ${heroes.map((h) => heroCard(h)).join("")}
@@ -60,7 +83,6 @@ function heroCard(hero: HeroAsset): string {
     <button class="hero-card" data-hero-id="${hero.id}" style="--hero-color: rgb(${r},${g},${b})">
       <img src="${hero.images.icon_hero_card_webp}" alt="${hero.name}" loading="lazy" />
       <span class="hero-name">${hero.name}</span>
-      <span class="hero-type">${hero.hero_type ?? ""}</span>
     </button>
   `;
 }
@@ -68,27 +90,14 @@ function heroCard(hero: HeroAsset): string {
 function wireHeroSelect(heroes: HeroAsset[]): void {
   const grid = document.getElementById("hero-grid")!;
   const search = document.getElementById("hero-search") as HTMLInputElement;
-  const filterBtns = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
-  let currentFilter = "all";
 
-  function applyFilters(): void {
+  search.addEventListener("input", () => {
     const q = search.value.toLowerCase();
     grid.querySelectorAll<HTMLElement>(".hero-card").forEach((card) => {
       const hero = heroes.find((h) => h.id === Number(card.dataset.heroId));
       if (!hero) return;
-      const matchesSearch = hero.name.toLowerCase().includes(q) || hero.class_name.toLowerCase().includes(q);
-      const matchesType = currentFilter === "all" || hero.hero_type === currentFilter;
-      card.style.display = matchesSearch && matchesType ? "" : "none";
-    });
-  }
-
-  search.addEventListener("input", applyFilters);
-  filterBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      filterBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentFilter = btn.dataset.filter!;
-      applyFilters();
+      const matches = hero.name.toLowerCase().includes(q) || hero.class_name.toLowerCase().includes(q);
+      card.style.display = matches ? "" : "none";
     });
   });
 
@@ -109,9 +118,7 @@ function renderLaneConfig(state: AppState): void {
   const otherHeroes = state.heroes.filter((h) => h.id !== hero.id).sort((a, b) => a.name.localeCompare(b.name));
 
   el.innerHTML = `
-    <header class="app-header">
-      <a class="app-title" id="reset-btn">Dynamic</a>
-    </header>
+    ${headerHTML()}
     <section class="lane-config">
       <div class="selected-hero-banner" style="--hero-color: rgb(${r},${g},${b})">
         <img src="${hero.images.icon_hero_card_webp}" alt="${hero.name}" />
@@ -294,7 +301,7 @@ function wireLaneConfig(state: AppState, otherHeroes: HeroAsset[]): void {
 function renderResults(state: AppState): void {
   if (state.loading) {
     el.innerHTML = `
-      <header class="app-header"><a class="app-title" id="reset-btn">Dynamic</a></header>
+      ${headerHTML()}
       <div class="loading">
         <div class="spinner"></div>
         <p>Analyzing matchup data...</p>
@@ -305,7 +312,7 @@ function renderResults(state: AppState): void {
 
   if (state.error) {
     el.innerHTML = `
-      <header class="app-header"><a class="app-title" id="reset-btn">Dynamic</a></header>
+      ${headerHTML()}
       <div class="error-box">
         <p>${state.error}</p>
         <button id="retry-btn" class="analyze-btn">Retry</button>
@@ -333,9 +340,7 @@ function renderResults(state: AppState): void {
   const tierLabels: Record<number, string> = { 1: "Tier 1", 2: "Tier 2", 3: "Tier 3", 4: "Tier 4", 5: "Tier 5" };
 
   el.innerHTML = `
-    <header class="app-header">
-      <a class="app-title" id="reset-btn">Dynamic</a>
-    </header>
+    ${headerHTML()}
     <section class="results">
       <div class="results-header" style="--hero-color: rgb(${r},${g},${b})">
         <div class="results-header-info">
@@ -387,7 +392,7 @@ function tierItemCard(ti: import("../api/types.js").TieredItem): string {
   const costLabel = cost > 0 ? `${(cost / 1000).toFixed(cost >= 1000 ? 1 : 0)}k` : "";
 
   return `
-    <div class="tier-item" data-item-id="${ti.item.id}">
+    <div class="tier-item" data-item-id="${ti.item.id}" data-slot="${slotLabel}">
       <img src="${ti.item.image_webp}" alt="${ti.item.name}" loading="lazy" />
       <div class="tier-item-info">
         <span class="tier-item-name">${ti.item.name}</span>

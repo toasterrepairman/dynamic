@@ -7,17 +7,69 @@
 }
 
 :root {
-  --bg: #0d0d1a;
-  --bg-card: #151528;
-  --bg-hover: #1e1e3a;
-  --bg-selected: #2a1a3e;
-  --text: #e0e0e0;
-  --text-dim: #888;
-  --text-bright: #fff;
-  --border: #2a2a45;
-  --accent: #e94560;
   --radius: 8px;
   --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+:root,
+[data-theme="solarized-dark"] {
+  --bg: #002b36;
+  --bg-card: #073642;
+  --bg-hover: #0a4050;
+  --bg-selected: #0a4050;
+  --text: #839496;
+  --text-dim: #586e75;
+  --text-bright: #93a1a1;
+  --border: #094959;
+  --accent: #268bd2;
+  --color-weapon: #b58900;
+  --color-vitality: #859900;
+  --color-spirit: #6c71c4;
+}
+
+[data-theme="solarized-light"] {
+  --bg: #fdf6e3;
+  --bg-card: #eee8d5;
+  --bg-hover: #ddd6c1;
+  --bg-selected: #ddd6c1;
+  --text: #657b83;
+  --text-dim: #93a1a1;
+  --text-bright: #073642;
+  --border: #d6cdb6;
+  --accent: #268bd2;
+  --color-weapon: #b58900;
+  --color-vitality: #859900;
+  --color-spirit: #6c71c4;
+}
+
+[data-theme="dracula"] {
+  --bg: #282a36;
+  --bg-card: #44475a;
+  --bg-hover: #343746;
+  --bg-selected: #6272a4;
+  --text: #f8f8f2;
+  --text-dim: #6272a4;
+  --text-bright: #f8f8f2;
+  --border: #44475a;
+  --accent: #ff79c6;
+  --color-weapon: #ffb86c;
+  --color-vitality: #50fa7b;
+  --color-spirit: #bd93f9;
+}
+
+[data-theme="nord"] {
+  --bg: #2e3440;
+  --bg-card: #3b4252;
+  --bg-hover: #434c5e;
+  --bg-selected: #434c5e;
+  --text: #d8dee9;
+  --text-dim: #7b88a1;
+  --text-bright: #eceff4;
+  --border: #434c5e;
+  --accent: #88c0d0;
+  --color-weapon: #ebcb8b;
+  --color-vitality: #a3be8c;
+  --color-spirit: #b48ead;
 }
 
 html {
@@ -84,6 +136,26 @@ h3 {
 .app-header .subtitle {
   color: var(--text-dim);
   font-size: 0.9rem;
+}
+
+.theme-picker {
+  margin-left: auto;
+}
+
+.theme-picker select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  font-family: var(--font);
+  cursor: pointer;
+  outline: none;
+}
+
+.theme-picker select:focus {
+  border-color: var(--accent);
 }
 
 button {
@@ -194,33 +266,6 @@ input[type="search"]:focus {
   flex-shrink: 0;
 }
 
-.type-filters {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.filter-btn {
-  padding: 0.35rem 0.8rem;
-  border-radius: var(--radius);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-}
-
-.filter-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -260,11 +305,7 @@ input[type="search"]:focus {
   line-height: 1.2;
 }
 
-.hero-card .hero-type {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  text-transform: capitalize;
-}
+
 
 .lane-config {
   margin-top: 1rem;
@@ -537,13 +578,18 @@ input[type="search"]:focus {
   padding: 0.4rem 0.6rem;
   background: var(--bg);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--tier-color, var(--accent));
   border-radius: 6px;
-  transition: border-color 0.15s;
+  transition: background 0.15s;
 }
 
 .tier-item:hover {
-  border-color: var(--tier-color, var(--accent));
+  background: var(--bg-hover);
 }
+
+.tier-item[data-slot="weapon"] { --tier-color: var(--color-weapon); }
+.tier-item[data-slot="vitality"] { --tier-color: var(--color-vitality); }
+.tier-item[data-slot="spirit"] { --tier-color: var(--color-spirit); }
 
 .tier-item img {
   width: 28px;
