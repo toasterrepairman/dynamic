@@ -1,4 +1,4 @@
-import type { AppState, HeroAsset, TieredItem } from "../api/types.js";
+import type { AppState, HeroAsset, TieredItem, TimeDistBar } from "../api/types.js";
 
 const el = document.getElementById("app")!;
 let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -433,6 +433,13 @@ function renderResults(state: AppState): void {
   function onKeydown(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
 
+    if (e.key === "`") {
+      e.preventDefault();
+      const next: AppState["counterTab"] = state.counterTab === "tier" ? "build" : "tier";
+      window.dispatchEvent(new CustomEvent("counter-tab", { detail: next }));
+      return;
+    }
+
     if (state.counterTab === "tier") {
       const n = parseInt(e.key);
       if (n >= 1 && n <= 5) {
@@ -466,6 +473,22 @@ function wrColor(pct: number): string {
   return `rgb(${r},${g},0)`;
 }
 
+const TIME_WINDOW_LABELS = ["0-5m", "5-10m", "10-15m", "15-20m", "20-25m", "25m+"];
+
+function renderMiniBarChart(dist: TimeDistBar[]): string {
+  if (dist.every((d) => d.matches === 0)) return "";
+  const tooltipParts = dist.map((d, i) => {
+    const label = `${TIME_WINDOW_LABELS[i]}: ${d.matches.toLocaleString()}`;
+    return d.isPeak ? `${label} (peak)` : label;
+  });
+  return `<div class="time-chart" title="Buy timing: ${tooltipParts.join(" | ")}">${dist
+    .map(
+      (d) =>
+        `<div class="time-bar${d.isPeak ? " peak" : ""}" style="height:${d.pct}%"></div>`,
+    )
+    .join("")}</div>`;
+}
+
 function renderTierView(
   sortedTiers: import("../api/types.js").TieredItem[][],
   tierLabels: Record<number, string>,
@@ -483,37 +506,35 @@ function renderTierView(
     .join("");
 }
 
+const BUILD_PHASES = [
+  { label: "Laning Phase", sub: "0 – 7 min", lo: 0, hi: 7 },
+  { label: "Mid Game", sub: "7 – 15 min", lo: 7, hi: 15 },
+  { label: "Late Game", sub: "15 – 25 min", lo: 15, hi: 25 },
+  { label: "Endgame", sub: "25+ min", lo: 25, hi: 999 },
+];
+
 function renderBuildPrio(items: TieredItem[]): string {
   if (items.length === 0) return '<p class="build-empty">No item data</p>';
 
-  const BUCKET = 120;
-  const maxTime = Math.max(...items.map((ti) => ti.stat.avg_buy_time_s));
-  const maxBucket = Math.ceil(maxTime / BUCKET);
-
-  const buckets: { min: number; max: number; items: TieredItem[] }[] = [];
-  for (let i = 0; i <= maxBucket; i++) {
-    const lo = i * BUCKET;
-    const hi = (i + 1) * BUCKET;
-    const bItems = items
-      .filter((ti) => ti.stat.avg_buy_time_s >= lo && ti.stat.avg_buy_time_s < hi)
+  const phases = BUILD_PHASES.map((phase) => {
+    const phaseItems = items
+      .filter((ti) => ti.peakMinute >= phase.lo && ti.peakMinute < phase.hi)
       .sort((a, b) => b.adjustedWinRate - a.adjustedWinRate);
-    if (bItems.length > 0) buckets.push({ min: lo, max: hi, items: bItems });
-  }
+    return { ...phase, items: phaseItems };
+  }).filter((p) => p.items.length > 0);
 
   const topPickIds = new Set<number>();
-  buckets.forEach((b) => {
+  phases.forEach((p) => {
     const best = new Map<string, TieredItem>();
-    for (const ti of b.items) {
+    for (const ti of p.items) {
       const slot = ti.item.item_slot_type ?? "unknown";
       if (!best.has(slot)) best.set(slot, ti);
     }
     for (const ti of best.values()) topPickIds.add(ti.item.id);
   });
 
-  return buckets
-    .map((b, idx) => {
-      const lo = Math.floor(b.min / 60);
-      const hi = Math.floor(b.max / 60);
+  return phases
+    .map((p, idx) => {
       return `
         <div class="build-phase" data-phase-idx="${idx}">
           <div class="build-phase-marker">
@@ -521,9 +542,10 @@ function renderBuildPrio(items: TieredItem[]): string {
             <div class="build-phase-line"></div>
           </div>
           <div class="build-phase-content">
-            <span class="build-phase-label">${lo}–${hi} min</span>
+            <span class="build-phase-label">${p.label}</span>
+            <span class="build-phase-sub">${p.sub}</span>
             <div class="build-phase-items">
-              ${b.items.map((ti) => buildPrioCard(ti, topPickIds.has(ti.item.id))).join("")}
+              ${p.items.map((ti) => buildPrioCard(ti, topPickIds.has(ti.item.id))).join("")}
             </div>
           </div>
         </div>
@@ -535,10 +557,10 @@ function renderBuildPrio(items: TieredItem[]): string {
 function buildPrioCard(ti: TieredItem, isTopPick: boolean): string {
   const wr = (ti.winRate * 100).toFixed(1);
   const wrPct = ti.winRate * 100;
-  const buyMin = Math.round(ti.stat.avg_buy_time_s / 60);
   const slotLabel = ti.item.item_slot_type ?? "";
   const cost = ti.item.cost ?? 0;
   const costLabel = cost > 0 ? `${(cost / 1000).toFixed(cost >= 1000 ? 1 : 0)}k` : "";
+  const chart = renderMiniBarChart(ti.timeDistribution);
 
   return `
     <div class="build-item${isTopPick ? " top-pick" : ""}" data-item-id="${ti.item.id}" data-slot="${slotLabel}">
@@ -552,7 +574,7 @@ function buildPrioCard(ti: TieredItem, isTopPick: boolean): string {
           ${costLabel ? `<span class="meta-tag">${costLabel}</span>` : ""}
         </span>
         <span class="tier-item-meta">
-          <span class="meta-dim">~${buyMin}min</span>
+          ${chart || `<span class="meta-dim">~${Math.round(ti.stat.avg_buy_time_s / 60)}min</span>`}
           <span class="meta-dim">${ti.stat.matches.toLocaleString()} games</span>
         </span>
       </div>
@@ -563,10 +585,10 @@ function buildPrioCard(ti: TieredItem, isTopPick: boolean): string {
 function tierItemCard(ti: TieredItem): string {
   const wr = (ti.winRate * 100).toFixed(1);
   const wrPct = ti.winRate * 100;
-  const buyMin = Math.round(ti.stat.avg_buy_time_s / 60);
   const slotLabel = ti.item.item_slot_type ?? "";
   const cost = ti.item.cost ?? 0;
   const costLabel = cost > 0 ? `${(cost / 1000).toFixed(cost >= 1000 ? 1 : 0)}k` : "";
+  const chart = renderMiniBarChart(ti.timeDistribution);
 
   return `
     <div class="tier-item" data-item-id="${ti.item.id}" data-slot="${slotLabel}">
@@ -579,7 +601,7 @@ function tierItemCard(ti: TieredItem): string {
           ${costLabel ? `<span class="meta-tag">${costLabel}</span>` : ""}
         </span>
         <span class="tier-item-meta">
-          <span class="meta-dim">~${buyMin}min</span>
+          ${chart || `<span class="meta-dim">~${Math.round(ti.stat.avg_buy_time_s / 60)}min</span>`}
           <span class="meta-dim">${ti.stat.matches.toLocaleString()} games</span>
         </span>
       </div>

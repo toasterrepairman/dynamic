@@ -209,6 +209,37 @@ input[type="search"]:focus {
   font-size: 0.8rem;
 }
 
+.time-chart {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 16px;
+  width: 42px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.time-bar {
+  flex: 1;
+  min-height: 1px;
+  border-radius: 1px 1px 0 0;
+  background: var(--border);
+  transition: opacity 0.15s;
+}
+
+.time-bar.peak {
+  background: var(--accent);
+}
+
+.time-chart:hover .time-bar {
+  opacity: 0.5;
+}
+
+.time-chart:hover .time-bar.peak {
+  opacity: 1;
+}
+
 .meta-tag {
   background: var(--bg);
   padding: 0.1rem 0.4rem;
@@ -769,8 +800,15 @@ input[type="search"]:focus {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-bright);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.1rem;
   font-variant-numeric: tabular-nums;
+}
+
+.build-phase-sub {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
 }
 
 .build-phase-items {

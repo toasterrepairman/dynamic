@@ -22,6 +22,7 @@
             echo "npm $(npm --version)"
             echo ""
             echo "Run 'npm run deploy' to build and stage the SPA for GitHub Pages."
+            echo "Run 'git checkout -- index.html' to restore the dev entrypoint before working."
           '';
         };
       });

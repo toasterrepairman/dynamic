@@ -46,6 +46,24 @@ export function fetchItemStats(
   );
 }
 
+export function fetchItemStatsTimeBucketed(
+  enemyHeroIds: number[],
+  heroId?: number,
+): Promise<import("./types.js").ItemStat[]> {
+  const params = new URLSearchParams();
+  if (heroId !== undefined) {
+    params.append("hero_ids", String(heroId));
+  }
+  for (const id of enemyHeroIds) {
+    params.append("enemy_hero_ids", String(id));
+  }
+  params.append("bucket", "game_time_min");
+  params.append("min_matches", "10");
+  return fetchCached<import("./types.js").ItemStat[]>(
+    `${BASE_URL}/v1/analytics/item-stats?${params}`,
+  );
+}
+
 export function fetchAllHeroCounterStats(): Promise<import("./types.js").HeroCounterStat[]> {
   return fetchCached<import("./types.js").HeroCounterStat[]>(
     `${BASE_URL}/v1/analytics/hero-counter-stats?same_lane_filter=true`,

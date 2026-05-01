@@ -155,12 +155,20 @@ export interface PerformanceCurvePoint {
   assists_std: number;
 }
 
+export interface TimeDistBar {
+  pct: number;
+  matches: number;
+  isPeak: boolean;
+}
+
 export interface TieredItem {
   item: ItemAsset;
   stat: ItemStat;
   winRate: number;
   adjustedWinRate: number;
   tier: "S" | "A" | "B" | "C" | "D";
+  peakMinute: number;
+  timeDistribution: TimeDistBar[];
 }
 
 export interface AppState {
@@ -173,6 +181,7 @@ export interface AppState {
   items: ItemAsset[];
   allMatchups: HeroCounterStat[];
   counterItems: TieredItem[];
+  itemTimeBuckets: ItemStat[];
   matchups: HeroCounterStat[];
   synergy: HeroSynergyStat | null;
   abilityOrders: AbilityOrderStat[];
