@@ -1,4 +1,4 @@
-import type { AppState, HeroAsset } from "../api/types.js";
+import type { AppState, HeroAsset, TieredItem } from "../api/types.js";
 
 const el = document.getElementById("app")!;
 
@@ -390,16 +390,15 @@ function renderResults(state: AppState): void {
       <div class="results-grid">
         <div class="results-main">
           <section class="tier-section">
-            <h2>Counter Items <span class="section-sub">vs ${state.enemies.map((e) => e?.name ?? "?").join(" & ")}</span></h2>
-            ${sortedTiers.map((items) => {
-              const tierNum = items[0]?.item.item_tier ?? 0;
-              return `
-                <h3 class="item-tier-heading">${tierLabels[tierNum] ?? `Tier ${tierNum}`}</h3>
-                <div class="tier-item-grid">
-                  ${items.map((ti) => tierItemCard(ti)).join("")}
-                </div>
-              `;
-            }).join("")}
+            <div class="counter-tabs">
+              <button class="counter-tab${state.counterTab === "tier" ? " active" : ""}" data-tab="tier">Counter Items</button>
+              <button class="counter-tab${state.counterTab === "build" ? " active" : ""}" data-tab="build">Build Prio</button>
+              <span class="section-sub">vs ${state.enemies.map((e) => e?.name ?? "?").join(" & ")}</span>
+            </div>
+            ${state.counterTab === "tier"
+              ? renderTierView(sortedTiers, tierLabels)
+              : renderBuildPrio(state.counterItems)
+            }
           </section>
         </div>
 
@@ -416,6 +415,13 @@ function renderResults(state: AppState): void {
   document.getElementById("back-config")!.addEventListener("click", () => {
     window.dispatchEvent(new CustomEvent("navigate", { detail: "lane-config" }));
   });
+
+  document.querySelectorAll<HTMLButtonElement>(".counter-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab as AppState["counterTab"];
+      window.dispatchEvent(new CustomEvent("counter-tab", { detail: tab }));
+    });
+  });
 }
 
 function wrColor(pct: number): string {
@@ -425,7 +431,101 @@ function wrColor(pct: number): string {
   return `rgb(${r},${g},0)`;
 }
 
-function tierItemCard(ti: import("../api/types.js").TieredItem): string {
+function renderTierView(
+  sortedTiers: import("../api/types.js").TieredItem[][],
+  tierLabels: Record<number, string>,
+): string {
+  return sortedTiers
+    .map((items) => {
+      const tierNum = items[0]?.item.item_tier ?? 0;
+      return `
+        <h3 class="item-tier-heading">${tierLabels[tierNum] ?? `Tier ${tierNum}`}</h3>
+        <div class="tier-item-grid">
+          ${items.map((ti) => tierItemCard(ti)).join("")}
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderBuildPrio(items: TieredItem[]): string {
+  if (items.length === 0) return '<p class="build-empty">No item data</p>';
+
+  const BUCKET = 120;
+  const maxTime = Math.max(...items.map((ti) => ti.stat.avg_buy_time_s));
+  const maxBucket = Math.ceil(maxTime / BUCKET);
+
+  const buckets: { min: number; max: number; items: TieredItem[] }[] = [];
+  for (let i = 0; i <= maxBucket; i++) {
+    const lo = i * BUCKET;
+    const hi = (i + 1) * BUCKET;
+    const bItems = items
+      .filter((ti) => ti.stat.avg_buy_time_s >= lo && ti.stat.avg_buy_time_s < hi)
+      .sort((a, b) => b.adjustedWinRate - a.adjustedWinRate);
+    if (bItems.length > 0) buckets.push({ min: lo, max: hi, items: bItems });
+  }
+
+  const topPickIds = new Set<number>();
+  buckets.forEach((b) => {
+    const best = new Map<string, TieredItem>();
+    for (const ti of b.items) {
+      const slot = ti.item.item_slot_type ?? "unknown";
+      if (!best.has(slot)) best.set(slot, ti);
+    }
+    for (const ti of best.values()) topPickIds.add(ti.item.id);
+  });
+
+  return buckets
+    .map((b) => {
+      const lo = Math.floor(b.min / 60);
+      const hi = Math.floor(b.max / 60);
+      return `
+        <div class="build-phase">
+          <div class="build-phase-marker">
+            <div class="build-phase-dot"></div>
+            <div class="build-phase-line"></div>
+          </div>
+          <div class="build-phase-content">
+            <span class="build-phase-label">${lo}–${hi} min</span>
+            <div class="build-phase-items">
+              ${b.items.map((ti) => buildPrioCard(ti, topPickIds.has(ti.item.id))).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function buildPrioCard(ti: TieredItem, isTopPick: boolean): string {
+  const wr = (ti.winRate * 100).toFixed(1);
+  const wrPct = ti.winRate * 100;
+  const buyMin = Math.round(ti.stat.avg_buy_time_s / 60);
+  const slotLabel = ti.item.item_slot_type ?? "";
+  const cost = ti.item.cost ?? 0;
+  const costLabel = cost > 0 ? `${(cost / 1000).toFixed(cost >= 1000 ? 1 : 0)}k` : "";
+
+  return `
+    <div class="build-item${isTopPick ? " top-pick" : ""}" data-item-id="${ti.item.id}" data-slot="${slotLabel}">
+      ${isTopPick ? '<span class="top-pick-badge" title="Best pick for this slot & phase"></span>' : ""}
+      <img src="${ti.item.image_webp}" alt="${ti.item.name}" loading="lazy" />
+      <div class="build-item-info">
+        <span class="build-item-name">${ti.item.name}</span>
+        <span class="tier-item-meta">
+          <span class="wr" style="color:${wrColor(wrPct)}">${wr}%</span>
+          <span class="meta-tag">${slotLabel}</span>
+          ${costLabel ? `<span class="meta-tag">${costLabel}</span>` : ""}
+        </span>
+        <span class="tier-item-meta">
+          <span class="meta-dim">~${buyMin}min</span>
+          <span class="meta-dim">${ti.stat.matches.toLocaleString()} games</span>
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function tierItemCard(ti: TieredItem): string {
   const wr = (ti.winRate * 100).toFixed(1);
   const wrPct = ti.winRate * 100;
   const buyMin = Math.round(ti.stat.avg_buy_time_s / 60);

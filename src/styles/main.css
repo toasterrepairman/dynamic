@@ -685,6 +685,164 @@ input[type="search"]:focus {
   flex-wrap: wrap;
 }
 
+.counter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.counter-tab {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: var(--font);
+}
+
+.counter-tab:hover {
+  color: var(--text-bright);
+}
+
+.counter-tab.active {
+  color: var(--text-bright);
+  border-bottom-color: var(--accent);
+}
+
+.counter-tabs .section-sub {
+  margin-left: auto;
+  align-self: center;
+  font-size: 0.8rem;
+}
+
+.build-phase {
+  display: flex;
+  gap: 0;
+  position: relative;
+}
+
+.build-phase-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 24px;
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+}
+
+.build-phase-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-card);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.build-phase-line {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  margin-top: 0.25rem;
+}
+
+.build-phase:last-child .build-phase-line {
+  display: none;
+}
+
+.build-phase-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 0.75rem;
+}
+
+.build-phase-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.build-phase-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.build-empty {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.build-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tier-color, var(--accent));
+  border-radius: 6px;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.build-item:hover {
+  background: var(--bg-hover);
+}
+
+.build-item[data-slot="weapon"] { --tier-color: var(--color-weapon); }
+.build-item[data-slot="vitality"] { --tier-color: var(--color-vitality); }
+.build-item[data-slot="spirit"] { --tier-color: var(--color-spirit); }
+
+.build-item.top-pick {
+  border-color: var(--accent);
+  border-left-color: var(--tier-color, var(--accent));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+}
+
+.top-pick-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--bg-card);
+}
+
+.build-item img {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: cover;
+  filter: invert(var(--icon-invert));
+}
+
+.build-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.build-item-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
 .ability-list {
   display: flex;
   flex-direction: column;

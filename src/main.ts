@@ -17,6 +17,7 @@ document.documentElement.dataset.theme = localStorage.getItem("theme") ?? "solar
 
 const state: AppState = {
   view: "hero-select",
+  counterTab: "tier",
   myHero: null,
   teammate: null,
   enemies: [null, null],
@@ -64,11 +65,13 @@ window.addEventListener("navigate", (e: Event) => {
   const target = (e as CustomEvent).detail as AppState["view"];
   state.view = target;
   state.error = null;
+  state.counterTab = "tier";
   render(state);
 });
 
 window.addEventListener("reset", () => {
   state.view = "hero-select";
+  state.counterTab = "tier";
   state.myHero = null;
   state.teammate = null;
   state.enemies = [null, null];
@@ -169,5 +172,10 @@ function abilityOrdersRanked(
     })
     .slice(0, 3);
 }
+
+window.addEventListener("counter-tab", (e: Event) => {
+  state.counterTab = (e as CustomEvent).detail as AppState["counterTab"];
+  render(state);
+});
 
 init();

@@ -165,6 +165,7 @@ export interface TieredItem {
 
 export interface AppState {
   view: "hero-select" | "lane-config" | "results";
+  counterTab: "tier" | "build";
   myHero: HeroAsset | null;
   teammate: HeroAsset | null;
   enemies: [HeroAsset | null, HeroAsset | null];
