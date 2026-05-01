@@ -1,6 +1,7 @@
 import type { AppState, HeroAsset, TieredItem } from "../api/types.js";
 
 const el = document.getElementById("app")!;
+let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null;
 
 function currentTheme(): string {
   return document.documentElement.dataset.theme ?? "solarized-dark";
@@ -422,6 +423,40 @@ function renderResults(state: AppState): void {
       window.dispatchEvent(new CustomEvent("counter-tab", { detail: tab }));
     });
   });
+
+  let buildFocusIdx = 0;
+
+  function scrollIntoView(el: HTMLElement | null): void {
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function onKeydown(e: KeyboardEvent): void {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+
+    if (state.counterTab === "tier") {
+      const n = parseInt(e.key);
+      if (n >= 1 && n <= 5) {
+        e.preventDefault();
+        scrollIntoView(document.getElementById(`tier-${n}`));
+      }
+    } else {
+      const phases = document.querySelectorAll<HTMLElement>("[data-phase-idx]");
+      if (phases.length === 0) return;
+      if (e.key === "1") {
+        e.preventDefault();
+        buildFocusIdx = Math.max(0, buildFocusIdx - 1);
+        scrollIntoView(phases[buildFocusIdx]);
+      } else if (e.key === "3") {
+        e.preventDefault();
+        buildFocusIdx = Math.min(phases.length - 1, buildFocusIdx + 1);
+        scrollIntoView(phases[buildFocusIdx]);
+      }
+    }
+  }
+
+  if (activeKeyHandler) document.removeEventListener("keydown", activeKeyHandler);
+  activeKeyHandler = onKeydown;
+  document.addEventListener("keydown", onKeydown);
 }
 
 function wrColor(pct: number): string {
@@ -439,7 +474,7 @@ function renderTierView(
     .map((items) => {
       const tierNum = items[0]?.item.item_tier ?? 0;
       return `
-        <h3 class="item-tier-heading">${tierLabels[tierNum] ?? `Tier ${tierNum}`}</h3>
+        <h3 class="item-tier-heading" id="tier-${tierNum}">${tierLabels[tierNum] ?? `Tier ${tierNum}`}</h3>
         <div class="tier-item-grid">
           ${items.map((ti) => tierItemCard(ti)).join("")}
         </div>
@@ -476,11 +511,11 @@ function renderBuildPrio(items: TieredItem[]): string {
   });
 
   return buckets
-    .map((b) => {
+    .map((b, idx) => {
       const lo = Math.floor(b.min / 60);
       const hi = Math.floor(b.max / 60);
       return `
-        <div class="build-phase">
+        <div class="build-phase" data-phase-idx="${idx}">
           <div class="build-phase-marker">
             <div class="build-phase-dot"></div>
             <div class="build-phase-line"></div>
